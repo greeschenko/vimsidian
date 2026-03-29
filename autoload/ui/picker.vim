@@ -46,7 +46,7 @@ def InitUI()
     border: [],
     borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
     cursorline: 1,
-    mapping: v:false,
+    mapping: false,
     zindex: 200,
   })
 
@@ -54,11 +54,12 @@ def InitUI()
     line: row,
     col: col + menu_width + 2,
     minwidth: preview_width,
+    maxwidth: preview_width,
     minheight: height,
     border: [],
     borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
-    wrap: v:true,
-    mapping: v:false,
+    wrap: true,
+    mapping: false,
     zindex: 200,
   })
 
@@ -70,8 +71,8 @@ def InitUI()
     border: [],
     borderchars: ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
     filter: function('PromptFilter'),
-    mapping: v:false,
-    zindex: 300,
+    mapping: false,
+    zindex: 200,
   })
 enddef
 
