@@ -7,6 +7,7 @@ import autoload 'core/path.vim' as path
 import autoload 'core/notes.vim' as notes
 import autoload 'core/backlinks.vim' as backlinks
 import autoload 'core/daily.vim' as daily
+import autoload 'editor/markdown.vim' as md
 
 if exists('g:loaded_vimsidian')
   finish
@@ -46,7 +47,7 @@ enddef
 # ----------------------------
 # Backlinks
 # ----------------------------
-export def ShowBacklinks()
+export def Backlinks()
   backlinks.Backlinks()
 enddef
 

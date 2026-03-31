@@ -44,7 +44,10 @@ enddef
 # ----------------------------
 export def GetNoteLinkId(note_path: string): string
   var vault_path = vault.GetDataPath()
-  var rel_dir = fnamemodify(substitute(note_path, '^' .. vault_path, '', ''), ':h')
+  var rel_path = substitute(note_path, '^' .. vault_path, '', '')
+  rel_path = substitute(rel_path, '^/', '', '')
+
+  var rel_dir = fnamemodify(rel_path, ':h')
   var title = GetNoteTitle(note_path)
 
   if rel_dir == '.'

@@ -23,7 +23,7 @@ export def Backlinks()
   var files_str = join(files_escaped, ' ')
 
   try
-    execute 'silent! vimgrep #' .. pattern .. '#j ' .. files_str
+    execute 'silent! vimgrep /' .. pattern .. '/j ' .. files_str
 
     if len(getqflist()) == 0
       echo 'No backlinks for: ' .. id
