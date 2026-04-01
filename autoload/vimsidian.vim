@@ -58,4 +58,11 @@ export def VimsidianPicker()
   picker_logic.VimsidianPicker()
 enddef
 
+# ----------------------------
+# Explore
+# ----------------------------
+export def OpenVaultExplorer()
+  vault.OpenVaultExplorer()
+enddef
+
 defcompile

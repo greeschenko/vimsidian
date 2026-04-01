@@ -14,11 +14,13 @@ command! -nargs=0 VimsidianFollowLink call vimsidian.FollowLink()
 command! VimsidianToday call vimsidian.TodayNote()
 command! VimsidianBacklinks call vimsidian.Backlinks()
 command! VimsidianPicker call vimsidian.VimsidianPicker()
+command! OpenVaultExplorer call vimsidian.OpenVaultExplorer()
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
 nnoremap <leader>vf <ScriptCmd>VimsidianFollowLink<CR>
 nnoremap <leader>vt <ScriptCmd>VimsidianToday<CR>
 nnoremap <leader>vb <ScriptCmd>VimsidianBacklinks<CR>
+nnoremap <leader>ve <ScriptCmd>OpenVaultExplorer<CR>
 
 # ----------------------------
 # Editor setup
