@@ -2,7 +2,7 @@ vim9script
 
 import autoload "vimsidian.vim" as vimsidian
 import autoload "editor/markdown.vim" as md
-
+import autoload "ui/explorer/explorer.vim" as explorer
 
 # ----------------------------
 # core setup
@@ -14,13 +14,13 @@ command! -nargs=0 VimsidianFollowLink call vimsidian.FollowLink()
 command! VimsidianToday call vimsidian.TodayNote()
 command! VimsidianBacklinks call vimsidian.Backlinks()
 command! VimsidianPicker call vimsidian.VimsidianPicker()
-command! OpenVaultExplorer call vimsidian.OpenVaultExplorer()
+command! VimsidianToggleExplorer call vimsidian.OpenVaultExplorer()
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
 nnoremap <leader>vf <ScriptCmd>VimsidianFollowLink<CR>
 nnoremap <leader>vt <ScriptCmd>VimsidianToday<CR>
 nnoremap <leader>vb <ScriptCmd>VimsidianBacklinks<CR>
-nnoremap <leader>ve <ScriptCmd>OpenVaultExplorer<CR>
+nnoremap <leader>ve <ScriptCmd>VimsidianToggleExplorer<CR>
 
 # ----------------------------
 # Editor setup

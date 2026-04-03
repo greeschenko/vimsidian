@@ -8,6 +8,7 @@ import autoload 'core/notes.vim' as notes
 import autoload 'core/backlinks.vim' as backlinks
 import autoload 'core/daily.vim' as daily
 import autoload 'editor/markdown.vim' as md
+import autoload "ui/explorer/explorer.vim" as explorer
 
 if exists('g:loaded_vimsidian')
   finish
@@ -62,7 +63,7 @@ enddef
 # Explore
 # ----------------------------
 export def OpenVaultExplorer()
-  vault.OpenVaultExplorer()
+    explorer.ToggleExplorer()
 enddef
 
 defcompile
