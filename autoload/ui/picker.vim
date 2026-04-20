@@ -1,6 +1,7 @@
 vim9script
 
 import autoload "core/path.vim" as path
+import autoload "core/tags.vim" as tags_module
 
 var state: dict<any> = {
   all: [],
@@ -33,6 +34,10 @@ export def Open(items: list<string>, opts: dict<any>)
 
   if has_key(opts, 'item_paths')
     state.all_paths = opts.item_paths
+  endif
+
+  if has_key(opts, 'search_by_tag')
+    tags_module.ScanAllNotesForTags()
   endif
 
   if state.content_timer != 0
@@ -166,6 +171,26 @@ def Filter()
     state.filtered = copy(state.all)
     state.index = 0
     return
+  endif
+
+  if q[0] == '#' && has_key(state.opts, 'search_by_tag')
+    var tag_name = strpart(q, 1)
+    if !empty(tag_name)
+      var note_paths = state.opts.search_by_tag(tag_name)
+      var results: list<string> = []
+
+      for np in note_paths
+        var normalized = path.NormalizeNotePath(np)
+        add(results, normalized)
+      endfor
+
+      if !empty(results)
+        state.filtered = results
+        state.all_paths = note_paths
+        state.index = 0
+        return
+      endif
+    endif
   endif
 
   var scored: list<dict<any>> = []
@@ -436,3 +461,5 @@ def PromptFilter(id: number, key: string): number
 
   return 1
 enddef
+
+defcompile

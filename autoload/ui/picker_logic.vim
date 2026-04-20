@@ -3,9 +3,18 @@ vim9script
 import autoload 'ui/picker.vim'
 import autoload 'core/path.vim'
 import autoload 'core/notes.vim'
+import autoload 'core/tags.vim' as tags
 
 def ResolveNote(note: string): string
   return path.ResolveLink(note)
+enddef
+
+def SearchByTag(tag: string): list<string>
+  return tags.SearchByTag(tag)
+enddef
+
+def GetTagSuggestions(prefix: string): list<string>
+  return tags.GetTagSuggestions(prefix)
 enddef
 
 def HighlightMatches(lines: list<string>, query: string): list<string>
@@ -62,6 +71,10 @@ export def VimsidianPicker()
     item_paths: note_paths,
 
     resolve_path: (note: string) => path.ResolveLink(note),
+
+    search_by_tag: (tag: string) => SearchByTag(tag),
+
+    get_tag_suggestions: (prefix: string) => GetTagSuggestions(prefix),
 
     preview: (note) => {
       var note_path = path.ResolveLink(note)

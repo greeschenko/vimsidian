@@ -17,6 +17,7 @@ command! VimsidianPicker call vimsidian.VimsidianPicker()
 command! VimsidianToggleExplorer call vimsidian.OpenVaultExplorer()
 command! VimsidianReminders call vimsidian.ShowReminders()
 command! VimsidianScanReminders call vimsidian.ScanReminders()
+command! VimsidianScanTags call vimsidian.ScanTags()
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
 nnoremap <leader>vn <ScriptCmd>VimsidianNew<CR>
@@ -64,4 +65,11 @@ def SetupMarkdown()
     vnoremap <buffer> <C-C> <Cmd>VimsidianToggleCodeBlock<CR> 
     vnoremap <buffer> <C-q> <Cmd>VimsidianToggleQuote<CR> 
     vnoremap <buffer> <C-l> <Cmd>VimsidianToggleList<CR> 
+
+    SetTagCompletion()
+enddef
+
+export def SetTagCompletion()
+    setlocal completefunc=vimsidian#TagCompleteWrapper
+    setlocal omnifunc=vimsidian#TagCompleteWrapper
 enddef

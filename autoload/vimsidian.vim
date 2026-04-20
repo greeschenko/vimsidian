@@ -10,7 +10,9 @@ import autoload 'core/backlinks.vim' as backlinks
 import autoload 'core/daily.vim' as daily
 import autoload 'core/templates.vim' as templates
 import autoload 'core/reminders.vim' as reminders
+import autoload 'core/tags.vim' as tags
 import autoload 'editor/markdown.vim' as md
+import autoload 'editor/tags_complete.vim' as tags_complete
 import autoload "ui/explorer/explorer.vim" as explorer
 
 if exists('g:loaded_vimsidian')
@@ -106,6 +108,53 @@ export def ShowReminders()
     reminders.ScanAllNotesForReminders()
     var reminders_file = reminders.GetRemindersFilePath()
     execute 'edit ' .. fnameescape(reminders_file)
+enddef
+
+# ----------------------------
+# Tags
+# ----------------------------
+export def ScanTags()
+    tags.ScanAllNotesForTags()
+enddef
+
+export def TagCompleteWrapper(findstart: number, base: string): any
+    return tags_complete.TagComplete(findstart, base)
+enddef
+
+export def DoTagCompletion()
+    if pumvisible()
+        return
+    endif
+
+    var line = getline('.')
+    var coln = col('.')
+    var pos = coln - 1
+    
+    if pos < 2
+        return
+    endif
+    
+    var hash_pos = -1
+    for i in range(pos, 0, -1)
+        if line[i] == '#'
+            hash_pos = i
+            break
+        endif
+        if line[i] =~ '\s'
+            break
+        endif
+    endfor
+    
+    if hash_pos >= 0
+        var current = strpart(line, hash_pos + 1, pos - hash_pos)
+        
+        if !empty(current)
+            var result = tags_complete.TagComplete(0, current)
+            if !empty(result)
+                call complete(hash_pos + 1, result)
+            endif
+        endif
+    endif
 enddef
 
 defcompile
