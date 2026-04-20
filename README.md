@@ -2,18 +2,21 @@
 
 Minimalistic Obsidian-like note system inside Vim (Vim9script).
 
-Vimsidian brings wiki-links, backlinks, daily notes, markdown editing helpers, and a fuzzy picker directly into your Vim — no Electron, no bloat.
+Vimsidian brings wiki-links, backlinks, daily notes, reminders, templates, fuzzy picker, and a vault explorer directly into your Vim — no Electron, no bloat.
 
 ---
 
 ## ✨ Features
 
-* 🔗 Wiki links: `[[note-name]]`
+* 🔗 Wiki links: `[[note-name]]` and `[[path/to/note]]`
+* 📝 Template system with variables (`{{TITLE}}`, `{{DATE}}`, etc.)
+* ⏰ Reminders: `every:1d`, `every:monday`, `on:2026-04-20`
+* 🔍 Hybrid fuzzy search (filename + content)
 * 📂 Automatic note creation
 * 🔎 Backlinks search via quickfix
-* 📅 Daily notes
+* 📅 Daily notes with auto-added reminders
 * 🔍 Interactive picker with preview
-* 🌳 Built-in vault explorer using `:Explore`
+* 🌳 Built-in vault explorer
 * ☑️ Markdown checkbox support
 * 📝 Markdown formatting helpers
 * 🧠 Clean architecture (core / ui / editor separation)
@@ -23,27 +26,32 @@ Vimsidian brings wiki-links, backlinks, daily notes, markdown editing helpers, a
 
 ## 📁 Project Structure
 
-```text
+```
 autoload/
 ├── core/
-│   ├── backlinks.vim
-│   ├── daily.vim
-│   ├── notes.vim
-│   ├── path.vim
-│   └── vault.vim
+│   ├── backlinks.vim      # Backlinks search
+│   ├── daily.vim          # Daily notes
+│   ├── notes.vim          # Note operations
+│   ├── path.vim           # Path resolution & slugify
+│   ├── reminders.vim      # Reminders system
+│   ├── templates.vim      # Template system
+│   └── vault.vim          # Vault configuration
 ├── editor/
-│   ├── checkbox.vim
-│   ├── list.vim
-│   ├── markdown.vim
-│   └── visual.vim
+│   ├── checkbox.vim       # Checkbox toggling
+│   ├── list.vim           # List handling
+│   ├── markdown.vim       # Markdown formatting
+│   └── visual.vim         # Visual mode helpers
 ├── ui/
-│   ├── picker_logic.vim
-│   ├── picker.vim
-│   └── wiki_links.vim
+│   ├── explorer/
+│   │   └── explorer.vim   # Vault tree explorer
+│   ├── new_note.vim       # New note picker
+│   ├── picker.vim         # Fuzzy picker
+│   ├── picker_logic.vim   # Picker business logic
+│   └── wiki_links.vim     # Wiki link handling
 └── vimsidian.vim
 
 plugin/
-└── vimsidian.vim
+└── vimsidian.vim          # Plugin entry point
 ```
 
 ---
@@ -61,18 +69,16 @@ Plug 'greeschenko/vimsidian'
 ## ⚙️ Configuration
 
 ```vim
+" Required: Set your vault path
 let g:vimsidian_vault_path = '~/your-vault'
-```
 
-Default:
-
-```text
-~/VAULT
+" Optional: Default template for new notes (default: 'blank')
+let g:vimsidian_default_template = 'daily'
 ```
 
 Notes are stored inside:
 
-```text
+```
 {vault}/data/
 ```
 
@@ -80,25 +86,33 @@ Notes are stored inside:
 
 ## 🧾 Commands
 
-```vim
-:VimsidianNew {title}            " Create or open note
-:VimsidianOpen {title}           " Open existing note
-:VimsidianFollowLink             " Follow [[link]] under cursor
-:VimsidianToday                  " Open today's daily note
-:VimsidianBacklinks              " Show backlinks
-:VimsidianPicker                 " Open note picker
-:OpenVaultExplorer               " Open vault/data explorer
+### Core
 
+```vim
+:VimsidianNew [title]          " Create note (opens picker if no title)
+:VimsidianOpen {title}         " Open existing note
+:VimsidianFollowLink           " Follow [[link]] under cursor
+:VimsidianToday                " Open today's daily note
+:VimsidianBacklinks            " Show backlinks
+:VimsidianPicker               " Open note picker
+:VimsidianToggleExplorer       " Open vault/data explorer
+:VimsidianReminders            " Show reminders file
+:VimsidianScanReminders        " Force scan all notes for reminders
+```
+
+### Markdown Editing
+
+```vim
 :VimsidianToggleCheckbox         " Toggle checkbox on current line
 :VimsidianToggleCheckboxVisual   " Toggle checkboxes in visual selection
 :VimsidianMakeCheckbox           " Convert current line into checkbox
 
 :VimsidianToggleBold             " Toggle bold in visual mode
-:VimsidianToggleItalic           " Toggle italic in visual mode
-:VimsidianToggleCode             " Toggle inline code in visual mode
-:VimsidianToggleCodeBlock        " Toggle fenced code block in visual mode
-:VimsidianToggleQuote            " Toggle quote block in visual mode
-:VimsidianToggleList             " Toggle markdown list in visual mode
+:VimsidianToggleItalic          " Toggle italic in visual mode
+:VimsidianToggleCode            " Toggle inline code in visual mode
+:VimsidianToggleCodeBlock       " Toggle fenced code block in visual mode
+:VimsidianToggleQuote           " Toggle quote block in visual mode
+:VimsidianToggleList            " Toggle markdown list in visual mode
 ```
 
 ---
@@ -108,11 +122,13 @@ Notes are stored inside:
 ### Core
 
 ```vim
+<leader>vn    New note (opens picker)
 <leader>vv    Open picker
 <leader>vf    Follow wiki link under cursor
 <leader>vt    Open today's note
 <leader>vb    Show backlinks
 <leader>ve    Open vault explorer
+<leader>vr    Show reminders
 ```
 
 ### Markdown Editing
@@ -147,7 +163,7 @@ Visual mode:
 
 ### Wiki Links
 
-```text
+```
 [[my-note]]
 [[projects/my-note]]
 ```
@@ -155,36 +171,79 @@ Visual mode:
 * Automatically resolved via link parser
 * Target note is created automatically if missing
 
-### Backlinks
+### Templates
 
-Uses `:vimgrep` across all notes to find references like:
+Templates are stored in `{vault}/data/templates/`.
 
-```text
-[[current-note]]
+**Available variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `{{TITLE}}` | Note title |
+| `{{DATE}}` | YYYY-MM-DD |
+| `{{TIME}}` | HH:MM |
+| `{{DATETIME}}` | YYYY-MM-DD HH:MM |
+| `{{YEAR}}` | Year |
+| `{{MONTH}}` | Month (01-12) |
+| `{{DAY}}` | Day (01-31) |
+| `{{WEEKDAY}}` | Day name |
+| `{{VAULT}}` | Vault path |
+| `{{TEMPLATE}}` | Template name |
+
+**Default templates:**
+* `blank.md` - Empty note with title
+* `daily.md` - Daily note with Tasks/Notes/Review sections
+
+### Reminders
+
+Add reminders using checkbox syntax:
+
+```markdown
+- [ ] Call mom every:sunday
+- [ ] Pay bills every:1d
+- [ ] Review notes every:1w
+- [ ] Meeting on:2026-04-25
+- [ ] Check reports every:15s
 ```
+
+**Syntax:**
+* `every:Nd` - Every N days
+* `every:Nw` - Every N weeks  
+* `every:monday` - Every Monday (or any day name)
+* `every:Ns` - Nth day of month
+* `on:YYYY-MM-DD` - One-time reminder
+
+**Behavior:**
+* Scanned on Vim startup and daily note creation
+* Due reminders auto-added to daily note
+* Consolidated view in `data/reminders.md`
 
 ### Picker
 
 Features:
-
-* Live filtering
+* Live fuzzy filtering
 * Arrow navigation
-* Preview pane
+* Preview pane with file content
+* Content search (starts after 3 seconds)
 
 Actions:
-
 * `Enter` → open note
 * `Ctrl-i` → insert wiki link
+* `Esc` → close picker
+* `Tab/Down` → cycle templates (in new note picker)
 
 ### Vault Explorer
 
-Uses Vim built-in `:Explore` / netrw in tree mode.
+Tree-based file explorer for `{vault}/data/`.
 
-Explorer opens directly inside:
-
-```text
-{vault}/data/
-```
+Keymaps:
+* `Enter` or `o` - Open file / toggle directory
+* `r` - Refresh
+* `C-d` - Delete
+* `C-y` - Copy
+* `C-p` - Paste
+* `C-m` - Move
+* `q` - Close
 
 ---
 
@@ -195,12 +254,11 @@ Explorer opens directly inside:
 
 Example:
 
-```text
+```
 Задача → zadacha.md
 ```
 
 Benefits:
-
 * Stable filenames
 * Reliable search
 * No encoding issues
@@ -211,13 +269,13 @@ Benefits:
 
 Vimsidian follows a clean layered design:
 
-* `core/` → business logic
-* `ui/` → Vim interaction layer
+* `core/` → business logic (notes, reminders, templates)
+* `ui/` → Vim interaction layer (picker, explorer)
 * `editor/` → markdown editing helpers
 * `vimsidian.vim` → public facade
+* `plugin/vimsidian.vim` → commands and autocmds
 
 This keeps:
-
 * code testable
 * logic reusable
 * UI decoupled
@@ -227,11 +285,8 @@ This keeps:
 ## 🚀 Roadmap
 
 * [ ] Tags support (`#tag`)
-* [ ] Media insertion helpers
-* [ ] Better fuzzy search scoring
 * [ ] Graph view
-* [ ] Async file loading
-* [ ] File picker integration
+* [ ] Media insertion helpers
 
 ---
 
@@ -240,7 +295,6 @@ This keeps:
 Pull requests are welcome.
 
 Ideas for improvement:
-
 * architecture
 * performance
 * markdown UX

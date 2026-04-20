@@ -8,19 +8,23 @@ import autoload "ui/explorer/explorer.vim" as explorer
 # core setup
 # ----------------------------
 
-command! -nargs=+ VimsidianNew call vimsidian.OpenOrCreateNote(<q-args>)
+command! -nargs=* -complete=customlist,vimsidian.CompleteNoteNames VimsidianNew call vimsidian.OpenOrCreateNote(<q-args>)
 command! -nargs=+ VimsidianOpen call vimsidian.OpenNote(<q-args>)
 command! -nargs=0 VimsidianFollowLink call vimsidian.FollowLink()
 command! VimsidianToday call vimsidian.TodayNote()
 command! VimsidianBacklinks call vimsidian.Backlinks()
 command! VimsidianPicker call vimsidian.VimsidianPicker()
 command! VimsidianToggleExplorer call vimsidian.OpenVaultExplorer()
+command! VimsidianReminders call vimsidian.ShowReminders()
+command! VimsidianScanReminders call vimsidian.ScanReminders()
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
+nnoremap <leader>vn <ScriptCmd>VimsidianNew<CR>
 nnoremap <leader>vf <ScriptCmd>VimsidianFollowLink<CR>
 nnoremap <leader>vt <ScriptCmd>VimsidianToday<CR>
 nnoremap <leader>vb <ScriptCmd>VimsidianBacklinks<CR>
 nnoremap <leader>ve <ScriptCmd>VimsidianToggleExplorer<CR>
+nnoremap <leader>vr <ScriptCmd>VimsidianReminders<CR>
 
 # ----------------------------
 # Editor setup

@@ -1,6 +1,8 @@
 vim9script
 
-var state = {
+import autoload "core/path.vim" as path
+
+var state: dict<any> = {
   all: [],
   filtered: [],
   query: '',
@@ -9,6 +11,10 @@ var state = {
   prompt: -1,
   preview: -1,
   opts: {},
+  content_matches: [],
+  content_timer: 0,
+  content_search_done: 0,
+  all_paths: [],
 }
 
 # ----------------------------
@@ -20,6 +26,19 @@ export def Open(items: list<string>, opts: dict<any>)
   state.query = ''
   state.index = 0
   state.opts = opts
+
+  state.content_matches = []
+  state.content_search_done = 0
+  state.all_paths = []
+
+  if has_key(opts, 'item_paths')
+    state.all_paths = opts.item_paths
+  endif
+
+  if state.content_timer != 0
+    timer_stop(state.content_timer)
+    state.content_timer = 0
+  endif
 
   InitUI()
   Update()
@@ -79,23 +98,174 @@ def InitUI()
 enddef
 
 # ----------------------------
-# CORE
+# FUZZY SEARCH
 # ----------------------------
-def Filter()
-  var q = tolower(state.query)
-  var res = []
+def FuzzyScore(item: string, query: string): number
+  var q = tolower(query)
+  var s = tolower(item)
 
-  for item in state.all
-    if empty(q) || stridx(tolower(item), q) >= 0
-      add(res, item)
+  if empty(q)
+    return 1
+  endif
+
+  if s == q
+    return 1000
+  endif
+
+  if stridx(s, q) == 0
+    return 900 + strchars(s)
+  endif
+
+  if stridx(s, q) >= 0
+    return 800 + strchars(s)
+  endif
+
+  var score = 0
+  var q_idx = 0
+  var last_pos = -1
+  var consecutive = 0
+
+  for i in range(strchars(s))
+    if q_idx >= strchars(q)
+      break
+    endif
+
+    var ch = s[i]
+    if ch == q[q_idx]
+      if last_pos == i - 1
+        consecutive += 1
+        score += 10 + consecutive * 5
+      else
+        consecutive = 0
+        score += 5
+      endif
+
+      if i == 0 || i > 0 && (s[i - 1] == ' ' || s[i - 1] == '-' || s[i - 1] == '_' || s[i - 1] == '/' || s[i - 1] == '.')
+        score += 15
+      endif
+
+      last_pos = i
+      q_idx += 1
     endif
   endfor
 
-  state.filtered = res
+  if q_idx < strchars(q)
+    return 0
+  endif
+
+  return score
+enddef
+
+# ----------------------------
+# CORE
+# ----------------------------
+def Filter()
+  var q = state.query
+
+  if empty(q)
+    state.filtered = copy(state.all)
+    state.index = 0
+    return
+  endif
+
+  var scored: list<dict<any>> = []
+
+  for item in state.all
+    var score = FuzzyScore(item, q)
+    if score > 0
+      add(scored, {item: item, score: score})
+    endif
+  endfor
+
+  scored = sort(scored, (a, b) => b.score - a.score)
+
+  state.filtered = []
+  for s in scored
+    add(state.filtered, s.item)
+  endfor
   state.index = 0
+
+  StartContentSearch()
+enddef
+
+def StartContentSearch()
+  if state.content_timer != 0
+    timer_stop(state.content_timer)
+    state.content_timer = 0
+  endif
+
+  state.content_matches = []
+  state.content_search_done = 0
+
+  if empty(state.query) || empty(state.all_paths)
+    state.content_search_done = 1
+    return
+  endif
+
+  state.content_timer = timer_start(3000, function('RunContentSearch'))
+enddef
+
+def RunContentSearch(timer: number)
+  if empty(state.query) || empty(state.all_paths)
+    state.content_search_done = 1
+    return
+  endif
+
+  state.content_matches = []
+  var q = tolower(state.query)
+
+  for idx in range(len(state.all_paths))
+    if idx >= len(state.all)
+      continue
+    endif
+
+    var item_path = state.all_paths[idx]
+    if !filereadable(item_path)
+      continue
+    endif
+
+    var lines = readfile(item_path, '', 100)
+    var found = false
+
+    for line in lines
+      if stridx(tolower(line), q) >= 0
+        found = true
+        break
+      endif
+    endfor
+
+    if found
+      add(state.content_matches, state.all[idx])
+    endif
+  endfor
+
+  state.content_search_done = true
+
+  for cm in state.content_matches
+    var found = false
+    for f in state.filtered
+      if stridx(tolower(f), tolower(cm)) >= 0
+        found = true
+        break
+      endif
+    endfor
+
+    if !found
+      add(state.filtered, '~' .. cm)
+    endif
+  endfor
+
+  if !empty(state.content_matches)
+    RenderMenu()
+  endif
 enddef
 
 def Update()
+  if state.content_timer != 0
+    timer_stop(state.content_timer)
+    state.content_timer = 0
+  endif
+
   Filter()
   RenderMenu()
   RenderPrompt()
@@ -130,7 +300,28 @@ def RenderPreview()
   endif
 
   var item = state.filtered[state.index]
-  var content = state.opts.preview(item)
+  var q = state.query
+
+  if stridx(item, '~') == 0
+    var item_clean = strpart(item, 1)
+    if has_key(state.opts, 'resolve_path')
+      var note_path = state.opts.resolve_path(item_clean)
+      if filereadable(note_path)
+        popup_settext(state.preview, readfile(note_path, '', 40))
+        return
+      endif
+    endif
+    popup_settext(state.preview, ['(content match - path not resolved)'])
+    return
+  endif
+
+  var content: list<string>
+
+  if has_key(state.opts, 'preview_with_highlight')
+    content = state.opts.preview_with_highlight(item, q)
+  else
+    content = state.opts.preview(item)
+  endif
 
   if type(content) != v:t_list
     content = [string(content)]
@@ -143,6 +334,11 @@ enddef
 # CLOSE
 # ----------------------------
 def Close()
+  if state.content_timer != 0
+    timer_stop(state.content_timer)
+    state.content_timer = 0
+  endif
+
   if state.menu != -1
     popup_close(state.menu)
   endif
@@ -171,7 +367,12 @@ def PromptFilter(id: number, key: string): number
       var item = state.filtered[state.index]
       Close()
 
-      if has_key(state.opts, 'on_select')
+      if stridx(item, '~') == 0
+        var item_clean = strpart(item, 1)
+        if has_key(state.opts, 'on_select')
+          state.opts.on_select(item_clean)
+        endif
+      elseif has_key(state.opts, 'on_select')
         state.opts.on_select(item)
       endif
     endif
@@ -182,10 +383,16 @@ def PromptFilter(id: number, key: string): number
   if key == "\<C-i>"
     if len(state.filtered) > 0
       var item = state.filtered[state.index]
+      var item_to_use = item
+
+      if stridx(item, '~') == 0
+        item_to_use = strpart(item, 1)
+      endif
+
       Close()
 
       if has_key(state.opts, 'on_insert')
-        state.opts.on_insert(item)
+        state.opts.on_insert(item_to_use)
       endif
     endif
     return 1

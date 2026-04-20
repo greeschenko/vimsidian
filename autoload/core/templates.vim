@@ -51,14 +51,68 @@ export def ApplyTemplate(file_path: string, template_name: string): bool
 enddef
 
 export def ListTemplates(): list<string>
+    EnsureTemplatesExist()
     var template_dir = vault.GetDataPath() .. '/templates'
-    if !isdirectory(template_dir)
-        mkdir(template_dir, 'p')
-    endif
 
     return map(
         split(globpath(template_dir, '*.md'), '\n'),
         (_, v) => fnamemodify(v, ':t:r')
     )
+enddef
+
+export def EnsureTemplatesExist()
+    var template_dir = vault.GetDataPath() .. '/templates'
+    if !isdirectory(template_dir)
+        mkdir(template_dir, 'p')
+    endif
+
+    if !filereadable(template_dir .. '/blank.md')
+        writefile(['# {{TITLE}}', ''], template_dir .. '/blank.md')
+    endif
+
+    if !filereadable(template_dir .. '/daily.md')
+        writefile([
+            '# {{DATE}} - {{WEEKDAY}}',
+            '',
+            '## Tasks',
+            '- [ ] ',
+            '',
+            '## Notes',
+            '',
+            '## Review',
+            '- [ ] ',
+            ''
+        ], template_dir .. '/daily.md')
+    endif
+enddef
+
+export def GetTemplatePreview(template_name: string, title: string): list<string>
+    var template_path = GetTemplatePath(template_name)
+
+    if !filereadable(template_path)
+        return ['(template not found)']
+    endif
+
+    var content = readfile(template_path)
+    var replacements = {
+        '{{TITLE}}': empty(title) ? 'Note Title' : title,
+        '{{DATE}}': strftime('%Y-%m-%d'),
+        '{{TIME}}': strftime('%H:%M'),
+        '{{DATETIME}}': strftime('%Y-%m-%d %H:%M'),
+        '{{YEAR}}': strftime('%Y'),
+        '{{MONTH}}': strftime('%m'),
+        '{{DAY}}': strftime('%d'),
+        '{{WEEKDAY}}': strftime('%A'),
+        '{{VAULT}}': vault.GetVaultPath(),
+        '{{TEMPLATE}}': template_name,
+    }
+
+    return map(content, (_, original_line) => {
+        var line = original_line
+        for [placeholder, value] in items(replacements)
+            line = substitute(line, '\V' .. placeholder, value, 'g')
+        endfor
+        return line
+    })
 enddef
 

@@ -58,6 +58,34 @@ export def OpenOrCreateNote(title: string)
     execute 'edit ' .. fnameescape(note_path)
 enddef
 
+export def OpenOrCreateNoteWithTemplate(title: string, template_name: string)
+    var note_path = CreateNoteWithTemplate(title, template_name)
+    execute 'edit ' .. fnameescape(note_path)
+enddef
+
+def CreateNoteWithTemplate(title: string, template_name: string): string
+    EnsureVaultExists()
+
+    var note_path = path.ResolveLink(title)
+    var note_dir = fnamemodify(note_path, ':h')
+
+    if !isdirectory(note_dir)
+        mkdir(note_dir, 'p')
+    endif
+
+    if !filereadable(note_path)
+        if !empty(template_name) && template_name != 'blank'
+            if !templates.ApplyTemplate(note_path, template_name)
+                throw 'Vimsidian: failed to apply template: ' .. template_name
+            endif
+        else
+            writefile(['# ' .. fnamemodify(title, ':t:r'), ''], note_path)
+        endif
+    endif
+
+    return note_path
+enddef
+
 # ----------------------------
 # Note metadata
 # ----------------------------
@@ -76,7 +104,7 @@ export def GetNoteLinkId(note_path: string): string
   return rel_dir .. '/' .. title
 enddef
 
-def GetNoteTitle(note_path: string): string
+export def GetNoteTitle(note_path: string): string
   if !filereadable(note_path)
     return ''
   endif
