@@ -24,11 +24,11 @@ endif
 # Notes
 # ----------------------------
 export def OpenNote(title: string)
-  notes.OpenNote(title)
+    notes.OpenNote(title)
 enddef
 
 export def OpenOrCreateNote(title: string)
-  notes.OpenOrCreateNote(title)
+    notes.OpenOrCreateNote(title)
 enddef
 
 # ----------------------------

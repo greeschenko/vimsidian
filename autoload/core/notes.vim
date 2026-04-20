@@ -2,6 +2,7 @@ vim9script
 
 import autoload 'core/vault.vim'
 import autoload 'core/path.vim'
+import autoload "core/templates.vim"
 
 # ----------------------------
 # Notes logic
@@ -10,20 +11,38 @@ def EnsureVaultExists()
   vault.EnsureDataDir()
 enddef
 
-def CreateNote(title: string): string
-  EnsureVaultExists()
+def CreateNote(raw_title: string): string
+    EnsureVaultExists()
 
-  var note_path = path.ResolveLink(title)
-  var note_dir = fnamemodify(note_path, ':h')
-  if !isdirectory(note_dir)
-    mkdir(note_dir, 'p')
-  endif
+    var title = raw_title
+    var template_name = ''
 
-  if !filereadable(note_path)
-    writefile(['# ' .. fnamemodify(title, ':t:r'), ''], note_path)
-  endif
+    var parts = split(raw_title)
 
-  return note_path
+    if len(parts) > 1 && parts[-1] =~ '^template:'
+        template_name = substitute(parts[-1], '^template:', '', '')
+        remove(parts, -1)
+        title = join(parts, ' ')
+    endif
+
+    var note_path = path.ResolveLink(title)
+    var note_dir = fnamemodify(note_path, ':h')
+
+    if !isdirectory(note_dir)
+        mkdir(note_dir, 'p')
+    endif
+
+    if !filereadable(note_path)
+        if !empty(template_name)
+            if !templates.ApplyTemplate(note_path, template_name)
+                throw 'Vimsidian: failed to apply template: ' .. template_name
+            endif
+        else
+            writefile(['# ' .. fnamemodify(title, ':t:r'), ''], note_path)
+        endif
+    endif
+
+    return note_path
 enddef
 
 export def OpenNote(title: string)
@@ -35,8 +54,8 @@ export def OpenNote(title: string)
 enddef
 
 export def OpenOrCreateNote(title: string)
-  var note_path = CreateNote(title)
-  execute 'edit ' .. fnameescape(note_path)
+    var note_path = CreateNote(title)
+    execute 'edit ' .. fnameescape(note_path)
 enddef
 
 # ----------------------------

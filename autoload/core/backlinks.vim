@@ -16,14 +16,14 @@ export def Backlinks()
   var id = notes.GetNoteLinkId(path)
   echom 'Searching: ' .. id
 
-  var pattern = '\V[[' .. id .. ']]'
+  var pattern = '\V\c[[' .. id .. ']]'
 
   var files = globpath(vault.GetDataPath(), '**/*.md', 0, 1)
   var files_escaped = map(copy(files), (_, v) => fnameescape(v))
   var files_str = join(files_escaped, ' ')
 
   try
-    execute 'silent! vimgrep /' .. pattern .. '/j ' .. files_str
+    execute 'silent! vimgrep #' .. pattern .. '#j ' .. files_str
 
     if len(getqflist()) == 0
       echo 'No backlinks for: ' .. id
