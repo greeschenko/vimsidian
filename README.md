@@ -9,6 +9,7 @@ Vimsidian brings wiki-links, backlinks, daily notes, reminders, templates, fuzzy
 ## ✨ Features
 
 * 🔗 Wiki links: `[[note-name]]` and `[[path/to/note]]`
+* 🏷️ Tags: `#tagname` with autocomplete
 * 📝 Template system with variables (`{{TITLE}}`, `{{DATE}}`, etc.)
 * ⏰ Reminders: `every:1d`, `every:monday`, `on:2026-04-20`
 * 🔍 Hybrid fuzzy search (filename + content)
@@ -34,12 +35,14 @@ autoload/
 │   ├── notes.vim          # Note operations
 │   ├── path.vim           # Path resolution & slugify
 │   ├── reminders.vim      # Reminders system
+│   ├── tags.vim           # Tags system
 │   ├── templates.vim      # Template system
 │   └── vault.vim          # Vault configuration
 ├── editor/
 │   ├── checkbox.vim       # Checkbox toggling
 │   ├── list.vim           # List handling
 │   ├── markdown.vim       # Markdown formatting
+│   ├── tags_complete.vim  # Tag autocomplete
 │   └── visual.vim         # Visual mode helpers
 ├── ui/
 │   ├── explorer/
@@ -52,6 +55,9 @@ autoload/
 
 plugin/
 └── vimsidian.vim          # Plugin entry point
+
+syntax/
+└── markdown.vim          # Markdown syntax highlighting
 ```
 
 ---
@@ -98,6 +104,7 @@ Notes are stored inside:
 :VimsidianToggleExplorer       " Open vault/data explorer
 :VimsidianReminders            " Show reminders file
 :VimsidianScanReminders        " Force scan all notes for reminders
+:VimsidianScanTags            " Force scan all notes for tags
 ```
 
 ### Markdown Editing
@@ -140,6 +147,9 @@ Normal mode:
 <C-x>         Toggle checkbox
 <C-c>         Convert line into checkbox
 <CR>          Continue current list / checkbox
+
+Insert mode (in markdown):
+<C-x><C-o>   Tag autocomplete (after #)
 
 Visual mode:
 <C-x>         Toggle checkbox
@@ -218,6 +228,25 @@ Add reminders using checkbox syntax:
 * Due reminders auto-added to daily note
 * Consolidated view in `data/reminders.md`
 
+### Tags
+
+Add tags using `#tagname` syntax anywhere in your notes:
+
+```markdown
+#project #review #important
+
+This note is about the project.
+```
+
+**Usage:**
+* Type `#` in picker to filter notes by tag
+* In markdown files: `Ctrl-x Ctrl-o` to trigger tag autocomplete
+* Tags are highlighted with unique color in markdown
+
+**Behavior:**
+* Auto-refreshes on autocomplete trigger
+* Search by tag in picker with `#tagname`
+
 ### Picker
 
 Features:
@@ -284,7 +313,7 @@ This keeps:
 
 ## 🚀 Roadmap
 
-* [ ] Tags support (`#tag`)
+* [x] Tags support (`#tag`)
 * [ ] Graph view
 * [ ] Media insertion helpers
 
