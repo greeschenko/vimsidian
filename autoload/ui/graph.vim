@@ -2,81 +2,114 @@ vim9script
 
 import autoload 'core/notes.vim'
 import autoload 'core/vault.vim' as vault
-import autoload 'core/backlinks.vim' as backlinks
+import autoload 'core/path.vim' as path
 
 var graph_win = -1
 var graph_buf = -1
-var current_note_id: string = ''
-var forward_links: list<string> = []
-var back_links: list<string> = []
+var current_note_id = ''
 
-export def OpenGraphView()
-  var note_path = expand('%:p')
-  if empty(note_path)
-    echom 'Vimsidian: no note open'
-    return
-  endif
-
+export def OpenGraphPanel()
   if graph_win != -1 && win_gotoid(graph_win)
-    CloseGraphWindow()
     return
   endif
 
-  current_note_id = notes.GetNoteLinkId(note_path)
-
-  execute ':sp'
+  execute 'vertical :30new'
 
   graph_win = win_getid()
   graph_buf = bufnr()
 
   setlocal buftype=nofile
-  setlocal bufhidden=wipe
+  setlocal bufhidden=hide
   setlocal noswapfile
   setlocal nowrap
   setlocal nonumber
   setlocal norelativenumber
   setlocal signcolumn=no
   setlocal foldcolumn=0
+  setlocal winfixwidth
   setlocal nobuflisted
   setlocal modifiable
   setlocal filetype=vimsidian-graph
 
-  RenderGraph()
+  UpdateGraph()
 
-  nnoremap <buffer> <CR> <ScriptOpen><SID>OpenSelected()<CR>
-  nnoremap <buffer> o <ScriptOpen><SID>OpenSelected()<CR>
-  nnoremap <buffer> <Tab> <ScriptOpen><SID>ToggleSection()<CR>
-  nnoremap <buffer> q <ScriptOpen><SID>CloseGraph()<CR>
+  nnoremap <buffer> <CR> <ScriptOpen><SID>OpenLinkFromGraph()<CR>
+  nnoremap <buffer> o <ScriptOpen><SID>OpenLinkFromGraph()<CR>
+  nnoremap <buffer> q <ScriptOpen><SID>CloseGraphPanel()<CR>
 enddef
 
-def RenderGraph()
-  forward_links = FindForwardLinks(current_note_id)
-  back_links = FindBacklinks(current_note_id)
+export def CloseGraphPanel()
+  if graph_win != -1
+    var wid = graph_win
+    graph_win = -1
+    graph_buf = -1
+    current_note_id = ''
+    if win_gotoid(wid)
+      close
+    endif
+  endif
+enddef
+
+export def ToggleGraphPanel()
+  if graph_win != -1 && win_gotoid(graph_win)
+    CloseGraphPanel()
+  else
+    OpenGraphPanel()
+  endif
+enddef
+
+export def UpdateGraph()
+  var note_path = expand('%:p')
+  if empty(note_path)
+    return
+  endif
+
+  var data_path = vault.GetDataPath()
+  if stridx(note_path, data_path) != 0
+    return
+  endif
+
+  if graph_buf == -1 || !bufexists(graph_buf)
+    return
+  endif
+
+  current_note_id = notes.GetNoteLinkId(note_path)
+  var forward = FindLinks(note_path)
+  var back = FindBacklinks(note_path)
 
   var lines: list<string> = []
-
-  add(lines, '# ' .. current_note_id)
+  add(lines, '📄 ' .. current_note_id)
   add(lines, '')
-  add(lines, '## → Links (' .. len(forward_links) .. ')')
-  for link in forward_links
-    add(lines, '  → ' .. link)
-  endfor
 
-  add(lines, '')
-  add(lines, '## ← Backlinks (' .. len(back_links) .. ')')
-  for link in back_links
-    add(lines, '  ← ' .. link)
-  endfor
+  if !empty(forward)
+    add(lines, '→ Links (' .. len(forward) .. ')')
+    for l in forward
+      add(lines, '  → ' .. l)
+    endfor
+  endif
 
-  add(lines, '')
-  add(lines, '<CR>/o open | <Tab> toggle section | q quit')
+  if !empty(back)
+    add(lines, '')
+    add(lines, '← Backlinks (' .. len(back) .. ')')
+    for l in back
+      add(lines, '  ← ' .. l)
+    endfor
+  endif
 
-  setline(1, lines)
-  setlocal nomodifiable
+  if empty(forward) && empty(back)
+    add(lines, '(no links)')
+  endif
+
+  setbufline(graph_buf, 1, lines)
+  setbufline(graph_buf, len(lines) + 1, '')
+
+  if graph_win != -1
+    win_gotoid(graph_win)
+    normal! gg
+  endif
 enddef
 
-def FindForwardLinks(note_id: string): list<string>
-  var note_path = expand('%:p')
+def FindLinks(note_path: string): list<string>
   if !filereadable(note_path)
     return []
   endif
@@ -97,22 +130,22 @@ def FindForwardLinks(note_id: string): list<string>
     if index(links, link) < 0
       add(links, link)
     endif
-
     rest = strpart(rest, close + 2)
   endwhile
 
   return sort(links)
 enddef
 
-def FindBacklinks(note_id: string): list<string>
-  var pattern = '\V\c[[' .. note_id .. ']]'
+def FindBacklinks(note_path: string): list<string>
+  var note_id = notes.GetNoteLinkId(note_path)
   var data_path = vault.GetDataPath()
 
+  var pattern = '\V\c[[' .. note_id .. ']]'
   var files = globpath(data_path, '**/*.md', 0, 1)
   var links: list<string> = []
 
   for f in files
-    if f == expand('%:p')
+    if f == note_path
       continue
     endif
 
@@ -131,43 +164,30 @@ def FindBacklinks(note_id: string): list<string>
   return sort(links)
 enddef
 
-def OpenSelected()
+def OpenLinkFromGraph()
   var line = getline('.')
-  if stridx(line, '# ') == 0
+  if stridx(line, '→ ') != 0 && stridx(line, '← ') != 0
     return
   endif
 
-  var link = substitute(line, '^[→←]\s\+', '', '')
+  var link = strpart(line, 2)
+  if link =~ '^ '
+    link = strpart(link, 1)
+  endif
+
   if empty(link)
     return
   endif
 
-  CloseGraphWindow()
   notes.OpenOrCreateNote(link)
 enddef
 
-def ToggleSection()
-  var l = line('.')
-  var line = getline(l)
-  if stridx(line, '## ← Backlinks') >= 0
-    execute '4'
-  elseif stridx(line, '## → Links') >= 0
-    normal! gg
-  endif
-enddef
-
-def CloseGraph()
-  CloseGraphWindow()
-enddef
-
-def CloseGraphWindow()
+def CloseGraphPanelWindow()
   if graph_win != -1
     var wid = graph_win
     graph_win = -1
     graph_buf = -1
     current_note_id = ''
-    forward_links = []
-    back_links = []
     if win_gotoid(wid)
       close
     endif

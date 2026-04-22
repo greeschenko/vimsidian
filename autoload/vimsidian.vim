@@ -27,6 +27,11 @@ augroup vimsidian_startup
   autocmd VimEnter * ++once call vimsidian.ScanReminders()
 augroup END
 
+augroup vimsidian_graph
+  autocmd!
+  autocmd BufEnter,BufWritePost *.md call vimsidian#UpdateGraphPanel()
+augroup END
+
 # Vault path
 if !exists('g:vimsidian_vault_path')
   g:vimsidian_vault_path = '~/VAULT'
@@ -160,10 +165,18 @@ export def DoTagCompletion()
 enddef
 
 # ----------------------------
-# Graph View
+# Graph Panel
 # ----------------------------
 export def OpenGraphView()
-    graph.OpenGraphView()
+    graph.OpenGraphPanel()
+enddef
+
+export def ToggleGraphPanel()
+    graph.ToggleGraphPanel()
+enddef
+
+export def UpdateGraphPanel()
+    graph.UpdateGraph()
 enddef
 
 # ----------------------------
