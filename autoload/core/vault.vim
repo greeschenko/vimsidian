@@ -13,8 +13,19 @@ export def GetDataPath(): string
   return GetVaultPath() .. '/data'
 enddef
 
+export def GetMediaPath(): string
+  return GetVaultPath() .. '/media'
+enddef
+
 export def EnsureDataDir()
   var dir = GetDataPath()
+  if !isdirectory(dir)
+    mkdir(dir, 'p')
+  endif
+enddef
+
+export def EnsureMediaDir()
+  var dir = GetMediaPath()
   if !isdirectory(dir)
     mkdir(dir, 'p')
   endif

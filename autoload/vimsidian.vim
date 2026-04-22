@@ -13,7 +13,9 @@ import autoload 'core/reminders.vim' as reminders
 import autoload 'core/tags.vim' as tags
 import autoload 'editor/markdown.vim' as md
 import autoload 'editor/tags_complete.vim' as tags_complete
-import autoload "ui/explorer/explorer.vim" as explorer
+import autoload 'ui/explorer/explorer.vim' as explorer
+import autoload 'ui/graph.vim' as graph
+import autoload 'ui/media_picker.vim' as media_picker
 
 if exists('g:loaded_vimsidian')
   finish
@@ -155,6 +157,20 @@ export def DoTagCompletion()
             endif
         endif
     endif
+enddef
+
+# ----------------------------
+# Graph View
+# ----------------------------
+export def OpenGraphView()
+    graph.OpenGraphView()
+enddef
+
+# ----------------------------
+# Media Picker
+# ----------------------------
+export def OpenMediaPicker()
+    media_picker.OpenMediaPicker()
 enddef
 
 defcompile

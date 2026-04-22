@@ -18,8 +18,12 @@ command! VimsidianToggleExplorer call vimsidian.OpenVaultExplorer()
 command! VimsidianReminders call vimsidian.ShowReminders()
 command! VimsidianScanReminders call vimsidian.ScanReminders()
 command! VimsidianScanTags call vimsidian.ScanTags()
+command! VimsidianGraph call vimsidian.OpenGraphView()
+command! VimsidianMedia call vimsidian.OpenMediaPicker()
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
+nnoremap <leader>vg <ScriptCmd>VimsidianGraph<CR>
+nnoremap <leader>vm <ScriptCmd>VimsidianMedia<CR>
 nnoremap <leader>vn <ScriptCmd>VimsidianNew<CR>
 nnoremap <leader>vf <ScriptCmd>VimsidianFollowLink<CR>
 nnoremap <leader>vt <ScriptCmd>VimsidianToday<CR>
