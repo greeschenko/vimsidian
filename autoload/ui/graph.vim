@@ -31,7 +31,41 @@ export def OpenGraphPanel()
   setlocal modifiable
   setlocal filetype=vimsidian-graph
 
-  UpdateGraph()
+  var note_path = expand('%:p')
+  if !empty(note_path)
+    var data_path = vault.GetDataPath()
+    if stridx(note_path, data_path) == 0
+      current_note_id = notes.GetNoteLinkId(note_path)
+      var forward = FindLinks(note_path)
+      var back = FindBacklinks(note_path)
+
+      var lines: list<string> = []
+      add(lines, '📄 ' .. current_note_id)
+      add(lines, '')
+
+      if !empty(forward)
+        add(lines, '→ Links (' .. len(forward) .. ')')
+        for l in forward
+          add(lines, '  [[' .. l .. ']]')
+        endfor
+      endif
+
+      if !empty(back)
+        add(lines, '')
+        add(lines, '← Backlinks (' .. len(back) .. ')')
+        for l in back
+          add(lines, '  [[' .. l .. ']]')
+        endfor
+      endif
+
+      if empty(forward) && empty(back)
+        add(lines, '(no links)')
+      endif
+
+      setline(1, lines)
+      setline(len(lines) + 1, '')
+    endif
+  endif
 
   nnoremap <buffer> <CR> <ScriptOpen><SID>OpenLinkFromGraph()<CR>
   nnoremap <buffer> o <ScriptOpen><SID>OpenLinkFromGraph()<CR>
@@ -59,6 +93,10 @@ export def ToggleGraphPanel()
 enddef
 
 export def UpdateGraph()
+  if graph_win == -1
+    return
+  endif
+
   var note_path = expand('%:p')
   if empty(note_path)
     return
@@ -69,7 +107,7 @@ export def UpdateGraph()
     return
   endif
 
-  if graph_buf == -1 || !bufexists(graph_buf)
+  if graph_buf == -1
     return
   endif
 
@@ -84,7 +122,7 @@ export def UpdateGraph()
   if !empty(forward)
     add(lines, '→ Links (' .. len(forward) .. ')')
     for l in forward
-      add(lines, '  → ' .. l)
+      add(lines, '  [[' .. l .. ']]')
     endfor
   endif
 
@@ -92,7 +130,7 @@ export def UpdateGraph()
     add(lines, '')
     add(lines, '← Backlinks (' .. len(back) .. ')')
     for l in back
-      add(lines, '  ← ' .. l)
+      add(lines, '  [[' .. l .. ']]')
     endfor
   endif
 
@@ -100,12 +138,9 @@ export def UpdateGraph()
     add(lines, '(no links)')
   endif
 
-  setbufline(graph_buf, 1, lines)
-  setbufline(graph_buf, len(lines) + 1, '')
-
-  if graph_win != -1
-    win_gotoid(graph_win)
-    normal! gg
+  if graph_win != -1 && win_gotoid(graph_win)
+    setline(1, lines)
+    setline(len(lines) + 1, '')
   endif
 enddef
 
@@ -166,20 +201,22 @@ enddef
 
 def OpenLinkFromGraph()
   var line = getline('.')
-  if stridx(line, '→ ') != 0 && stridx(line, '← ') != 0
+  if stridx(line, '[[') < 0
     return
   endif
 
-  var link = strpart(line, 2)
-  if link =~ '^ '
-    link = strpart(link, 1)
+  var open = stridx(line, '[[')
+  var close = stridx(line, ']]', open + 2)
+  if close < 0
+    return
   endif
 
+  var link = strpart(line, open + 2, close - open - 2)
   if empty(link)
     return
   endif
 
-  notes.OpenOrCreateNote(link)
+  execute 'vsplit ' .. fnameescape(notes.OpenOrCreateNote(link))
 enddef
 
 def CloseGraphPanelWindow()

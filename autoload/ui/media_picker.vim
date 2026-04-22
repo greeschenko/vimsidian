@@ -23,7 +23,7 @@ export def OpenMediaPicker()
 
     on_select: (name) => {
       var path = vault.GetMediaPath() .. '/' .. name
-      execute 'edit ' .. fnameescape(path)
+      system('xdg-open ' .. fnameescape(path) .. ' &')
     },
 
     on_insert: (name) => {
