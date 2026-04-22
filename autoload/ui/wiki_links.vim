@@ -10,49 +10,32 @@ import autoload 'core/vault.vim' as vault
 def GetLinkUnderCursor(): string
   var line = getline('.')
   var coln = col('.')
-  var pos = coln - 1
+  var word = expand('<cword>')
 
-  if pos < 0
-    pos = 0
+  if empty(word)
+    return ''
   endif
 
-  var rest = line
-  var i = 0
-  while i < strlen(rest)
-    var p = stridx(rest, '[[')
-    if p >= 0 && p <= pos && pos <= p + 3
-      var q = stridx(rest, ']]', p + 2)
-      if q >= 0
-        return 'wiki:' .. strpart(rest, p + 2, q - p - 2)
-      endif
+  if stridx(word, '[[') == 0
+    var link = substitute(word, '^\[\[', '', '')
+    link = substitute(link, '\]\]$', '', '')
+    if !empty(link)
+      return 'wiki:' .. link
     endif
+  endif
 
-    p = stridx(rest, '![')
-    if p >= 0 && p <= pos
-      var q = stridx(rest, '](', p + 2)
-      var q2 = stridx(rest, ')', q + 2)
-      if q >= 0 && q2 >= 0 && pos >= p + 2 && pos <= q2 + 1
-        return 'media:' .. strpart(rest, p + 2, q - p - 2)
-      endif
+  if stridx(word, '![') == 0
+    var name = substitute(word, '^\!\[', '', '')
+    var close = stridx(name, '](')
+    if close > 0
+      name = strpart(name, 0, close)
+      return 'media:' .. name
     endif
+  endif
 
-    p = stridx(rest, 'http')
-    if p >= 0 && p <= pos
-      var sp = stridx(rest, ' ', p)
-      if sp < 0
-        sp = strlen(rest)
-      endif
-      if pos <= sp
-        return 'web:' .. strpart(rest, p, sp - p)
-      endif
-    endif
-
-    if i >= strlen(rest) - 1
-      break
-    endif
-    i += 1
-    rest = strpart(rest, 1)
-  endwhile
+  if word =~? '^http'
+    return 'web:' .. word
+  endif
 
   return ''
 enddef
