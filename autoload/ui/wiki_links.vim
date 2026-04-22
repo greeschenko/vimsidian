@@ -10,47 +10,48 @@ import autoload 'core/vault.vim' as vault
 def GetLinkUnderCursor(): string
   var line = getline('.')
   var coln = col('.')
-  var start = coln - 1
-  if start < 0
-    start = 0
+  var pos = coln - 1
+
+  if pos < 0
+    pos = 0
   endif
 
-  var search_start = start - 50
-  if search_start < 0
-    search_start = 0
-  endif
+  var rest = line
+  var i = 0
+  while i < strlen(rest)
+    var p = stridx(rest, '[[')
+    if p >= 0 && p <= pos && pos <= p + 3
+      var q = stridx(rest, ']]', p + 2)
+      if q >= 0
+        return 'wiki:' .. strpart(rest, p + 2, q - p - 2)
+      endif
+    endif
 
-  var open = stridx(line, '[[', search_start)
-  while open >= 0 && open < start
-    var close = stridx(line, ']]', open + 2)
-    if close >= 0 && start >= open + 2 && start <= close + 2
-      return 'wiki:' .. strpart(line, open + 2, close - open - 2)
+    p = stridx(rest, '![')
+    if p >= 0 && p <= pos
+      var q = stridx(rest, '](', p + 2)
+      var q2 = stridx(rest, ')', q + 2)
+      if q >= 0 && q2 >= 0 && pos >= p + 2 && pos <= q2 + 1
+        return 'media:' .. strpart(rest, p + 2, q - p - 2)
+      endif
     endif
-    open = stridx(line, '[[', open + 2)
-  endwhile
 
-  open = stridx(line, '![', search_start)
-  while open >= 0 && open < start
-    var close = stridx(line, '](', open + 2)
-    var close2 = stridx(line, ')', close + 2)
-    if close >= 0 && close2 >= 0 && start >= open + 2 && start <= close2 + 1
-      var filename = strpart(line, open + 2, close - open - 2)
-      return 'media:' .. filename
+    p = stridx(rest, 'http')
+    if p >= 0 && p <= pos
+      var sp = stridx(rest, ' ', p)
+      if sp < 0
+        sp = strlen(rest)
+      endif
+      if pos <= sp
+        return 'web:' .. strpart(rest, p, sp - p)
+      endif
     endif
-    open = stridx(line, '![', open + 2)
-  endwhile
 
-  open = stridx(line, 'http', search_start)
-  while open >= 0 && open < start
-    var rest = strpart(line, open)
-    var close = stridx(rest, ' ')
-    if close < 0
-      close = strlen(rest)
+    if i >= strlen(rest) - 1
+      break
     endif
-    if start >= open && start <= open + close
-      return 'web:' .. strpart(rest, 0, close)
-    endif
-    open = stridx(line, 'http', open + 4)
+    i += 1
+    rest = strpart(rest, 1)
   endwhile
 
   return ''
