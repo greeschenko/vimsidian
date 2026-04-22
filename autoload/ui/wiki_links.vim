@@ -10,34 +10,48 @@ import autoload 'core/vault.vim' as vault
 def GetLinkUnderCursor(): string
   var line = getline('.')
   var coln = col('.')
-
-  var open = stridx(line, '[[', coln - 10)
-  if open >= 0 && coln >= open + 1
-    var close = stridx(line, ']]', open + 2)
-    if close >= 0 && coln <= close + 2
-      return 'wiki:' .. strpart(line, open + 2, close - open - 2)
-    endif
+  var start = coln - 1
+  if start < 0
+    start = 0
   endif
 
-  open = stridx(line, '![', coln - 10)
-  if open >= 0 && coln >= open + 1
+  var search_start = start - 50
+  if search_start < 0
+    search_start = 0
+  endif
+
+  var open = stridx(line, '[[', search_start)
+  while open >= 0 && open < start
+    var close = stridx(line, ']]', open + 2)
+    if close >= 0 && start >= open + 2 && start <= close + 2
+      return 'wiki:' .. strpart(line, open + 2, close - open - 2)
+    endif
+    open = stridx(line, '[[', open + 2)
+  endwhile
+
+  open = stridx(line, '![', search_start)
+  while open >= 0 && open < start
     var close = stridx(line, '](', open + 2)
     var close2 = stridx(line, ')', close + 2)
-    if close >= 0 && close2 >= 0 && coln <= close2 + 1
+    if close >= 0 && close2 >= 0 && start >= open + 2 && start <= close2 + 1
       var filename = strpart(line, open + 2, close - open - 2)
       return 'media:' .. filename
     endif
-  endif
+    open = stridx(line, '![', open + 2)
+  endwhile
 
-  open = stridx(line, 'http', coln - 20)
-  if open >= 0 && coln >= open + 1
+  open = stridx(line, 'http', search_start)
+  while open >= 0 && open < start
     var rest = strpart(line, open)
     var close = stridx(rest, ' ')
     if close < 0
       close = strlen(rest)
     endif
-    return 'web:' .. strpart(rest, 0, close)
-  endif
+    if start >= open && start <= open + close
+      return 'web:' .. strpart(rest, 0, close)
+    endif
+    open = stridx(line, 'http', open + 4)
+  endwhile
 
   return ''
 enddef
@@ -46,13 +60,16 @@ enddef
 # Follow wiki link (original)
 # ----------------------------
 export def FollowLink()
-  var link = trim(GetLinkUnderCursor())
-  if empty(link)
+  var result = GetLinkUnderCursor()
+  if empty(result)
     echoerr 'Vimsidian: no wiki link under cursor'
     return
   endif
 
-  notes.OpenOrCreateNote(link)
+  if stridx(result, 'wiki:') == 0
+    var content = strpart(result, 5)
+    notes.OpenOrCreateNote(content)
+  endif
 enddef
 
 # ----------------------------
