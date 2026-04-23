@@ -21,7 +21,7 @@ command! VimsidianScanTags call vimsidian.ScanTags()
 command! VimsidianGraph call vimsidian.OpenGraphView()
 command! VimsidianMedia call vimsidian.OpenMediaPicker()
 command! VimsidianToggleGraph call vimsidian.ToggleGraphPanel()
-command! VimsidianOpenLink call vimsidian.OpenLink()
+
 
 import autoload "ui/graph.vim" as graph
 
@@ -34,7 +34,6 @@ nnoremap <leader>vt <ScriptCmd>VimsidianToday<CR>
 nnoremap <leader>vb <ScriptCmd>VimsidianBacklinks<CR>
 nnoremap <leader>ve <Cmd>VimsidianToggleExplorer<CR>
 nnoremap <leader>vr <Cmd>VimsidianReminders<CR>
-nnoremap <leader>vo <Cmd>VimsidianOpenLink<CR>
 
 # ----------------------------
 # Editor setup

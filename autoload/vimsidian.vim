@@ -76,10 +76,6 @@ export def FollowLink()
   wiki_links.FollowLink()
 enddef
 
-export def OpenLink()
-  wiki_links.OpenLink()
-enddef
-
 # ----------------------------
 # Daily
 # ----------------------------
