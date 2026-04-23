@@ -1,7 +1,7 @@
 vim9script
 
 import autoload 'core/notes.vim'
-import autoload 'core/media.vim' as media
+import autoload 'core/browser.vim' as browser
 import autoload 'core/vault.vim' as vault
 
 # ----------------------------
@@ -71,14 +71,14 @@ export def FollowLink()
   elseif result =~ '^media:'
     var content = strpart(result, 6)
     if content =~? '^http'
-      system('xdg-open ' .. fnameescape(content) .. ' &')
+      browser.OpenInNewWindow(content)
     else
       var path = vault.GetMediaPath() .. '/' .. content
-      system('xdg-open ' .. fnameescape(path) .. ' &')
+      browser.OpenInNewWindow(path)
     endif
   elseif result =~ '^web:'
     var content = strpart(result, 4)
-    system('xdg-open ' .. fnameescape(content) .. ' &')
+    browser.OpenInNewWindow(content)
   endif
 enddef
 
