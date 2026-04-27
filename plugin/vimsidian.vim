@@ -23,7 +23,7 @@ command! VimsidianMedia call vimsidian.OpenMediaPicker()
 command! VimsidianToggleGraph call vimsidian.ToggleGraphPanel()
 
 
-import autoload "ui/graph.vim" as graph
+import autoload "ui/graph/graph.vim" as graph
 
 nnoremap <leader>vv <ScriptCmd>VimsidianPicker<CR>
 nnoremap <leader>vg <ScriptCmd>VimsidianToggleGraph<CR>
