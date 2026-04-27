@@ -20,6 +20,7 @@ Vimsidian brings wiki-links, backlinks, daily notes, reminders, templates, fuzzy
 * 🌳 Built-in vault explorer
 * ☑️ Markdown checkbox support
 * 📝 Markdown formatting helpers
+* 🗺️ Interactive graph view (backlinks + outgoing links)
 * 🧠 Clean architecture (core / ui / editor separation)
 * ⚡ Written in Vim9script
 
@@ -47,6 +48,12 @@ autoload/
 ├── ui/
 │   ├── explorer/
 │   │   └── explorer.vim   # Vault tree explorer
+│   ├── graph/
+│   │   ├── domain/
+│   │   │   └── graph_state.vim    # Graph state management
+│   │   ├── graph.vim      # Graph public API
+│   │   └── infrastructure/
+│   │       └── window.vim # Graph popup window
 │   ├── new_note.vim       # New note picker
 │   ├── picker.vim         # Fuzzy picker
 │   ├── picker_logic.vim   # Picker business logic
@@ -102,6 +109,7 @@ Notes are stored inside:
 :VimsidianBacklinks            " Show backlinks
 :VimsidianPicker               " Open note picker
 :VimsidianToggleExplorer       " Open vault/data explorer
+:VimsidianToggleGraph          " Toggle graph panel
 :VimsidianReminders            " Show reminders file
 :VimsidianScanReminders        " Force scan all notes for reminders
 :VimsidianScanTags            " Force scan all notes for tags
@@ -135,6 +143,7 @@ Notes are stored inside:
 <leader>vt    Open today's note
 <leader>vb    Show backlinks
 <leader>ve    Open vault explorer
+<leader>vg    Toggle graph panel
 <leader>vr    Show reminders
 ```
 
@@ -274,6 +283,18 @@ Keymaps:
 * `C-m` - Move
 * `q` - Close
 
+### Graph Panel
+
+Interactive 3-panel graph view showing current note with backlinks (left) and outgoing links (right).
+
+Keymaps:
+* `h` / `Left` - Move to backlinks panel
+* `l` / `Right` - Move to links panel
+* `j` / `Down` - Navigate down in current panel
+* `k` / `Up` - Navigate up in current panel
+* `Enter` or `o` - Open selected note
+* `q` - Close graph panel
+
 ---
 
 ## 🌍 Unicode / Cyrillic Support
@@ -314,7 +335,7 @@ This keeps:
 ## 🚀 Roadmap
 
 * [x] Tags support (`#tag`)
-* [ ] Graph view
+* [x] Graph view
 * [ ] Media insertion helpers
 
 ---

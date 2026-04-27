@@ -94,7 +94,7 @@ def FindBacklinks(note_path: string): list<string>
     var lines = readfile(f)
     for line in lines
       if match(line, pattern) >= 0
-        var title = notes.GetNoteTitle(f)
+        var title = notes.GetNoteLinkId(f)
         if index(links, title) < 0
           add(links, title)
         endif
