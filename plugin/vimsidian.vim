@@ -5,6 +5,12 @@ import autoload "editor/markdown.vim" as md
 import autoload "ui/explorer/explorer.vim" as explorer
 
 # ----------------------------
+# Help tags
+# ----------------------------
+
+silent! execute 'helptags ' .. expand('<sfile>:p:h:h') .. '/doc'
+
+# ----------------------------
 # core setup
 # ----------------------------
 

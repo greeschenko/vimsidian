@@ -77,6 +77,12 @@ Using vim-plug:
 Plug 'greeschenko/vimsidian'
 ```
 
+After installation, load help with:
+```vim
+:helptags ALL
+```
+Or restart Vim and the help will be loaded automatically.
+
 ---
 
 ## ⚙️ Configuration

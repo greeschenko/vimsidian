@@ -1,0 +1,366 @@
+*vimsidian.txt*  Vimsidian - Obsidian-like note system for Vim
+
+==============================================================================
+OVERVIEW                                            *vimsidian* *vimsidian-overview*
+
+Vimsidian is a minimalistic Obsidian-like note system written in Vim9script.
+It brings wiki-links, backlinks, daily notes, reminders, templates, fuzzy
+picker, vault explorer, and interactive graph view directly into Vim.
+
+Requirements:
+- Vim 9.0+ with Vim9script support
+- Vault path configured (see |g:vimsidian_vault_path|)
+
+==============================================================================
+CONFIGURATION                                       *vimsidian-config*
+
+g:vimsidian_vault_path                          *g:vimsidian_vault_path*
+        Required. Path to your notes vault.
+>
+        let g:vimsidian_vault_path = '~/my-vault'
+<
+
+g:vimsidian_default_template                 *g:vimsidian_default_template*
+        Default template for new notes. Default: 'blank'
+>
+        let g:vimsidian_default_template = 'daily'
+<
+
+Vault Structure
+>
+        {vault}/
+        └── data/
+            ├── 2024-01-01.md    (daily notes)
+            ├── projects/
+            │   └── my-project.md
+            ├── templates/
+            │   ├── blank.md
+            │   └── daily.md
+            ├── reminders.md
+            └── tags.md
+<
+
+==============================================================================
+COMMANDS                                           *vimsidian-commands*
+
+:VimsidianNew [{title}]                        *VimsidianNew*
+        Create a new note. If {title} is omitted, opens picker to choose
+        template. The note is created in {vault}/data/.
+
+:VimsidianOpen {title}                         *VimsidianOpen*
+        Open an existing note by title. Creates if doesn't exist.
+
+:VimsidianFollowLink                           *VimsidianFollowLink*
+        Follow the wiki link under the cursor. Supports:
+        - [[note-name]]
+        - [[path/to/note]]
+
+:VimsidianToday                                *VimsidianToday*
+        Open today's daily note. Creates if doesn't exist with format
+        YYYY-MM-DD.md.
+
+:VimsidianBacklinks                            *VimsidianBacklinks*
+        Search for all notes that link to the current note. Results
+        shown in quickfix list.
+
+:VimsidianPicker                               *VimsidianPicker*
+        Open fuzzy picker to search and open notes. Supports:
+        - Text search: matches filename and content
+        - Tag search: #tagname filters by tag
+
+:VimsidianToggleExplorer                       *VimsidianToggleExplorer*
+        Toggle vault/data file explorer (tree view).
+
+:VimsidianToggleGraph                          *VimsidianToggleGraph*
+        Toggle interactive graph panel showing current note with
+        backlinks (left) and outgoing links (right).
+
+:VimsidianReminders                            *VimsidianReminders*
+        Open reminders file showing all pending reminders.
+
+:VimsidianScanReminders                        *VimsidianScanReminders*
+        Force scan all notes for reminders. Normally done on startup
+        and daily note creation.
+
+:VimsidianScanTags                             *VimsidianScanTags*
+        Force scan all notes for tags. Normally done on tag
+        autocomplete trigger.
+
+:VimsidianToggleCheckbox                       *VimsidianToggleCheckbox*
+        Toggle checkbox state on current line.
+        - [ ] → [x]
+        - [x] → [ ]
+
+:VimsidianToggleCheckboxVisual                 *VimsidianToggleCheckboxVisual*
+        Toggle checkboxes in visual selection.
+
+:VimsidianMakeCheckbox                         *VimsidianMakeCheckbox*
+        Convert current line into a checkbox line.
+
+:VimsidianToggleBold                           *VimsidianToggleBold*
+        Toggle **bold** in visual mode.
+
+:VimsidianToggleItalic                        *VimsidianToggleItalic*
+        Toggle *italic* in visual mode.
+
+:VimsidianToggleCode                          *VimsidianToggleCode*
+        Toggle `inline code` in visual mode.
+
+:VimsidianToggleCodeBlock                     *VimsidianToggleCodeBlock*
+        Toggle fenced code block in visual mode.
+
+:VimsidianToggleQuote                         *VimsidianToggleQuote*
+        Toggle > quote block in visual mode.
+
+:VimsidianToggleList                          *VimsidianToggleList*
+        Toggle - list item in visual mode.
+
+==============================================================================
+KEYMAPPINGS                                         *vimsidian-keymaps*
+
+Global Mappings
+>
+        <leader>vn    New note (opens picker)
+        <leader>vv    Open picker
+        <leader>vf    Follow wiki link under cursor
+        <leader>vt    Open today's note
+        <leader>vb    Show backlinks
+        <leader>ve    Open vault explorer
+        <leader>vg    Toggle graph panel
+        <leader>vr    Show reminders
+<
+
+Markdown Mappings (automatic in .md files)
+
+Normal Mode~
+>
+        <C-x>         Toggle checkbox
+        <C-c>         Convert line into checkbox
+        <CR>          Continue current list / checkbox
+<
+
+Insert Mode~
+>
+        <C-x><C-o>   Tag autocomplete (after #)
+<
+
+Visual Mode~
+>
+        <C-x>         Toggle checkbox
+        <C-b>         Toggle bold
+        <C-i>         Toggle italic
+        <C-c>         Toggle inline code
+        <C-C>         Toggle code block
+        <C-q>         Toggle quote block
+        <C-l>         Toggle markdown list
+<
+
+Graph Panel Mappings
+>
+        h / <Left>    Move to backlinks panel
+        l / <Right>   Move to links panel
+        j / <Down>    Navigate down
+        k / <Up>      Navigate up
+        <CR> / o      Open selected note
+        q             Close graph panel
+<
+
+Vault Explorer Mappings
+>
+        Enter / o     Open file / toggle directory
+        r             Refresh
+        <C-d>         Delete
+        <C-y>         Copy
+        <C-p>         Paste
+        <C-m>         Move
+        q             Close
+<
+
+Picker Mappings
+>
+        <Enter>       Open note
+        <C-i>         Insert wiki link
+        <Esc>         Close picker
+        <Tab> / <Down>  Cycle templates (new note picker)
+<
+
+==============================================================================
+WIKI LINKS                                         *vimsidian-wikilinks*
+
+Vimsidian supports Obsidian-style wiki links:
+
+>
+        [[note-name]]
+        [[path/to/note]]
+        [[note-name|display text]]
+<
+
+Features:
+- Automatic note creation when opening missing links
+- Path resolution for nested directories
+- Supports Cyrillic titles (transliterated to ASCII filenames)
+
+==============================================================================
+TEMPLATES                                          *vimsidian-templates*
+
+Templates are stored in {vault}/data/templates/.
+
+Available Variables~
+>
+        {{TITLE}}      Note title
+        {{DATE}}       YYYY-MM-DD
+        {{TIME}}       HH:MM
+        {{DATETIME}}   YYYY-MM-DD HH:MM
+        {{YEAR}}       Year
+        {{MONTH}}      Month (01-12)
+        {{DAY}}        Day (01-31)
+        {{WEEKDAY}}    Day name
+        {{VAULT}}      Vault path
+        {{TEMPLATE}}   Template name
+<
+
+Default Templates~
+>
+        blank.md      - Empty note with title
+        daily.md      - Daily note with Tasks/Notes/Review sections
+<
+
+Creating Custom Templates~
+>
+        # {{TITLE}}
+
+        ## Tasks
+        - [ ]
+
+        ## Notes
+
+        ## Review
+<
+
+==============================================================================
+REMINDERS                                          *vimsidian-reminders*
+
+Add reminders using checkbox syntax with time specifiers:
+
+>
+        - [ ] Call mom every:sunday
+        - [ ] Pay bills every:1d
+        - [ ] Review notes every:1w
+        - [ ] Meeting on:2026-04-25
+        - [ ] Check reports every:15s
+<
+
+Syntax~
+>
+        every:Nd         Every N days
+        every:Nw         Every N weeks
+        every:monday     Every Monday (or any day name)
+        every:Ns         Nth day of month
+        on:YYYY-MM-DD   One-time reminder
+<
+
+Behavior~
+- Scanned on Vim startup and daily note creation
+- Due reminders auto-added to daily note
+- View all reminders with |:VimsidianReminders|
+
+==============================================================================
+TAGS                                               *vimsidian-tags*
+
+Add tags using #tagname syntax anywhere in notes:
+
+>
+        #project #review #important
+
+        This note is about the project.
+<
+
+Usage~
+- Type # in picker to filter notes by tag
+- In markdown: Ctrl-x Ctrl-o to trigger tag autocomplete
+- Tags are highlighted with unique color
+
+==============================================================================
+GRAPH PANEL                                       *vimsidian-graph*
+
+The graph panel shows an interactive 3-panel view:
+
+>
+        [Backlinks]  [Current]  [Outgoing Links]
+           ↓            ●           ↓
+<
+
+Features:
+- Shows current note in center
+- Left panel: notes that link TO current note (backlinks)
+- Right panel: notes that current note links TO (outgoing links)
+- Navigate with h/j/k/l or arrow keys
+- Press Enter or o to open selected note
+- Works with nested directories (subdir/note-name)
+
+==============================================================================
+PICKER                                             *vimsidian-picker*
+
+Fuzzy search picker with live filtering and preview.
+
+Features:
+- Live fuzzy filtering
+- Arrow key navigation
+- Preview pane with file content
+- Content search (starts after 3 seconds of typing)
+
+Actions:
+- Enter: Open note
+- Ctrl-i: Insert wiki link at cursor
+- Esc: Close picker
+- Tab/Down: Cycle templates (in new note picker)
+
+Search Syntax~
+>
+        plain text     Search in filename and content
+        #tagname      Filter by tag
+<
+
+==============================================================================
+VAULT EXPLORER                                    *vimsidian-explorer*
+
+Tree-based file explorer for {vault}/data/.
+
+Features:
+- Directory tree view
+- Create, rename, delete files
+- Copy/paste/move operations
+
+Keymaps: See |vimsidian-keymaps|
+
+==============================================================================
+MARKDOWN SUPPORT                                   *vimsidian-markdown*
+
+Automatic Features~
+- Syntax highlighting for markdown
+- Wiki link highlighting ([[note]])
+- Tag highlighting (#tag)
+- Checkbox detection and styling
+
+Manual Features~
+- Toggle bold/italic/code/quote/list (visual mode)
+- Toggle checkboxes (normal/visual mode)
+- Continue lists and checkboxes (normal mode)
+
+==============================================================================
+ISSUES                                             *vimsidian-issues*
+
+If you encounter problems:
+
+1. Check |g:vimsidian_vault_path| is set correctly
+2. Ensure vault directory exists and is writable
+3. Try :VimsidianScanReminders and :VimsidianScanTags
+4. Check for errors with :messages
+
+==============================================================================
+LICENSE                                             *vimsidian-license*
+
+MIT License
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:
