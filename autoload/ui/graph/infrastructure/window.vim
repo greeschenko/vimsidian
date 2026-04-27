@@ -215,12 +215,22 @@ enddef
 
 export def Render()
   var g = domain.GetState()
+
   var active_idx = state.active_popup_idx
   var active_side = state.active_side
 
   var max_side = GetMaxSide()
   var back_count = len(g.backlinks) > max_side ? max_side : len(g.backlinks)
   var link_count = len(g.links) > max_side ? max_side : len(g.links)
+  var actual_count = back_count > link_count ? back_count : link_count
+
+  var total_height = actual_count * (1 + VERT_SPACING) + 2
+  if total_height > &lines - 4
+    total_height = &lines - 4
+  endif
+  state.start_row = (&lines - total_height) / 2
+  state.center_row = state.start_row + actual_count * (1 + VERT_SPACING) / 2
+  state.start_col = (&columns - WIDTH * 3 - SPACING * 2) / 2
 
   if len(state.popup_backlinks) != back_count
     RecreateBacklinks()
