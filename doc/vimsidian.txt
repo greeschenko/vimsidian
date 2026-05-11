@@ -169,7 +169,7 @@ Vault Explorer Mappings
 >
         Enter / o     Open file / toggle directory
         r             Refresh
-        <C-d>         Delete
+        <C-d>         Move to Bin
         <C-y>         Copy
         <C-p>         Paste
         <C-m>         Move
@@ -328,7 +328,7 @@ Tree-based file explorer for {vault}/data/.
 
 Features:
 - Directory tree view
-- Create, rename, delete files
+- Create, rename, move files to Bin
 - Copy/paste/move operations
 
 Keymaps: See |vimsidian-keymaps|

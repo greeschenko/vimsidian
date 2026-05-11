@@ -53,7 +53,23 @@ export def DeleteMedia(media_path: string): bool
     return false
   endif
 
-  delete(media_path)
+  var bin_path = vault.GetBinPath() .. '/' .. strftime('%Y-%m-%d') .. '/media'
+  if !isdirectory(bin_path)
+    mkdir(bin_path, 'p')
+  endif
+
+  var filename = fnamemodify(media_path, ':t')
+  var dest = bin_path .. '/' .. filename
+
+  var counter = 1
+  var base = fnamemodify(filename, ':t:r')
+  var ext = fnamemodify(filename, ':e')
+  while filereadable(dest) || isdirectory(dest)
+    dest = bin_path .. '/' .. base .. '_' .. counter .. (empty(ext) ? '' : '.' .. ext)
+    counter += 1
+  endwhile
+
+  rename(media_path, dest)
   return true
 enddef
 

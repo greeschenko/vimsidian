@@ -17,6 +17,10 @@ export def GetMediaPath(): string
   return GetVaultPath() .. '/media'
 enddef
 
+export def GetBinPath(): string
+  return GetVaultPath() .. '/Bin'
+enddef
+
 export def EnsureDataDir()
   var dir = GetDataPath()
   if !isdirectory(dir)
@@ -26,6 +30,13 @@ enddef
 
 export def EnsureMediaDir()
   var dir = GetMediaPath()
+  if !isdirectory(dir)
+    mkdir(dir, 'p')
+  endif
+enddef
+
+export def EnsureBinDir()
+  var dir = GetBinPath()
   if !isdirectory(dir)
     mkdir(dir, 'p')
   endif
