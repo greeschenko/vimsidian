@@ -21,7 +21,7 @@ def GetLinkUnderCursor(): string
       var link = strpart(line, wiki_start + 2, wiki_end - wiki_start - 2)
       if !empty(link)
         var file_link = substitute(link, '|.*$', '', '')
-        if file_link =~? '^/' || file_link =~? '^~'
+        if file_link =~? '^/' || file_link =~? '^\~'
           return 'file:' .. file_link
         endif
         return 'wiki:' .. link
@@ -50,7 +50,7 @@ def GetLinkUnderCursor(): string
           return 'web:' .. url
         elseif url =~? '^/'
           return 'file:' .. url
-        elseif url =~? '^~'
+        elseif url =~? '^\~'
           return 'file:' .. url
         else
           return 'media:' .. url
