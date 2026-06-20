@@ -124,16 +124,7 @@ Notes are stored inside:
 ### Markdown Editing
 
 ```vim
-:VimsidianToggleCheckbox         " Toggle checkbox on current line
-:VimsidianToggleCheckboxVisual   " Toggle checkboxes in visual selection
-:VimsidianMakeCheckbox           " Convert current line into checkbox
-
-:VimsidianToggleBold             " Toggle bold in visual mode
-:VimsidianToggleItalic          " Toggle italic in visual mode
-:VimsidianToggleCode            " Toggle inline code in visual mode
-:VimsidianToggleCodeBlock       " Toggle fenced code block in visual mode
-:VimsidianToggleQuote           " Toggle quote block in visual mode
-:VimsidianToggleList            " Toggle markdown list in visual mode
+:VimsidianFollowLink           " Follow [[link]] or [text](url) under cursor
 ```
 
 ---
@@ -145,7 +136,7 @@ Notes are stored inside:
 ```vim
 <leader>vn    New note (opens picker)
 <leader>vv    Open picker
-<leader>vf    Follow wiki link under cursor
+<leader>vf    Follow link under cursor (wiki, file, or web)
 <leader>vt    Open today's note
 <leader>vb    Show backlinks
 <leader>ve    Open vault explorer
@@ -195,6 +186,20 @@ Visual mode:
 
 * Automatically resolved via link parser
 * Target note is created automatically if missing
+
+### Filesystem Links
+
+Absolute filesystem paths in `[[...]]` or `[text](...)` links are opened for editing:
+
+```
+[[/home/user/doc.md]]
+[[~/notes/todo.md|display name]]
+[file](~/documents/notes.txt)
+```
+
+* Paths starting with `/` or `~/` are opened directly in a buffer
+* The `~` is expanded to your home directory
+* Wiki link display names (`[[path|name]]`) are supported
 
 ### Templates
 

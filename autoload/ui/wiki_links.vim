@@ -20,6 +20,10 @@ def GetLinkUnderCursor(): string
     if coln >= wiki_start + 1 && coln <= wiki_end + 2
       var link = strpart(line, wiki_start + 2, wiki_end - wiki_start - 2)
       if !empty(link)
+        var file_link = substitute(link, '|.*$', '', '')
+        if file_link =~? '^/' || file_link =~? '^~'
+          return 'file:' .. file_link
+        endif
         return 'wiki:' .. link
       endif
     endif
@@ -44,6 +48,10 @@ def GetLinkUnderCursor(): string
           return 'media:' .. url
         elseif url =~? '^http'
           return 'web:' .. url
+        elseif url =~? '^/'
+          return 'file:' .. url
+        elseif url =~? '^~'
+          return 'file:' .. url
         else
           return 'media:' .. url
         endif
@@ -79,6 +87,9 @@ export def FollowLink()
   elseif result =~ '^web:'
     var content = strpart(result, 4)
     browser.OpenInNewWindow(content)
+  elseif result =~ '^file:'
+    var content = expand(strpart(result, 5))
+    execute 'edit ' .. fnameescape(content)
   endif
 enddef
 
